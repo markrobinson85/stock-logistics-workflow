@@ -25,7 +25,7 @@ class MrpWorkorder(models.Model):
             related_move_lots = (move_lot.move_id.active_move_lot_ids + self.active_move_lot_ids).filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel'])
 
             # Sum and compare move lots of wo and mo.
-            if (quantity_at_location < sum(related_move_lots.mapped('quantity_done')) and
+            if (float_compare(quantity_at_location, sum(related_move_lots.mapped('quantity_done')), precision_digits=p) == -1 and
                     move_lot.product_id.type == 'product' and
                     not move_lot.product_id.allow_negative_stock and
                     not move_lot.product_id.categ_id.allow_negative_stock):

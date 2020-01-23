@@ -30,10 +30,10 @@ class MrpWorkorder(models.Model):
                     not move_lot.product_id.allow_negative_stock and
                     not move_lot.product_id.categ_id.allow_negative_stock):
 
-                # previously_committed = sum(move_lot.move_id.active_move_lot_ids.filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel']).mapped('quantity_done'))
-                # currently_committed = sum(self.active_move_lot_ids.filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel']).mapped('quantity_done'))
+                previously_committed = sum(move_lot.move_id.active_move_lot_ids.filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel']).mapped('quantity_done'))
+                currently_committed = sum(self.active_move_lot_ids.filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel']).mapped('quantity_done'))
                 total_requested = sum(related_move_lots.mapped('quantity_done'))
-                available = quantity_at_location
+                available = quantity_at_location - previously_committed
 
                 raise ValidationError(_(
                     "You cannot validate this workorder operation because the "
@@ -49,8 +49,8 @@ class MrpWorkorder(models.Model):
                         # move_lot.qty,
                         self.production_id.location_src_id.complete_name,
                         # previously_committed,
-                        # currently_committed,
-                        total_requested,
+                        currently_committed,
+                        # total_requested,
                         available,
                 ))
 

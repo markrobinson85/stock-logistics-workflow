@@ -42,7 +42,7 @@ class MrpWorkorder(models.Model):
                     "not allowed for this product. \n\n"
                     # "Previously Requested: %s \n"
                     # "Currently Requested: %s \n"
-                    "Total Requested: %s \n"
+                    "Requested: %s \n"
                     "Available: %s") % (
                         move_lot.product_id.name,
                         move_lot.lot_id.name,

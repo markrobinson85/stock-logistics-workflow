@@ -33,14 +33,14 @@ class MrpWorkorder(models.Model):
                 previously_committed = sum(move_lot.move_id.active_move_lot_ids.filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel']).mapped('quantity_done'))
                 currently_committed = sum(self.active_move_lot_ids.filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel']).mapped('quantity_done'))
                 total_requested = sum(related_move_lots.mapped('quantity_done'))
-                available = quantity_at_location - previously_committed
+                available = round(quantity_at_location - previously_committed, 3)
 
                 raise ValidationError(_(
                     "You cannot validate this workorder operation because the "
                     "stock level of the product %s %s would become negative "
                     "on the stock location '%s' and negative stock is "
                     "not allowed for this product. \n\n"
-                    # "Previously Requested: %s \n"
+                    "Registered on MO: %s \n"
                     # "Currently Requested: %s \n"
                     "Requested: %s \n"
                     "Available: %s") % (
@@ -48,7 +48,7 @@ class MrpWorkorder(models.Model):
                         move_lot.lot_id.name,
                         # move_lot.qty,
                         self.production_id.location_src_id.complete_name,
-                        # previously_committed,
+                        previously_committed,
                         currently_committed,
                         # total_requested,
                         available,

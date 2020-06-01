@@ -16,7 +16,7 @@ class MrpWorkorder(models.Model):
         p = self.env['decimal.precision'].precision_get('Product Unit of Measure')
 
         child_locations = self.env['stock.location'].search([('location_id', 'child_of', self.production_id.location_src_id.id)])
-        for move_lot in self.active_move_lot_ids.filtered(lambda x: x.product_id.tracking != 'none'):
+        for move_lot in self.active_move_lot_ids.filtered(lambda x: x.lot_id and x.product_id.tracking != 'none'):
 
             # Get the quantity of the requested lot code from the MO source location and child locations.
             quants_at_location = self.env['stock.quant'].search(['&', ('lot_id', '=', move_lot.lot_id.id), ('product_id', '=', move_lot.product_id.id), ('location_id', 'in', child_locations.ids)])

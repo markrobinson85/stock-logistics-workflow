@@ -16,7 +16,8 @@ class MrpWorkorder(models.Model):
         p = self.env['decimal.precision'].precision_get('Product Unit of Measure')
 
         child_locations = self.env['stock.location'].search([('location_id', 'child_of', self.production_id.location_src_id.id)])
-        for move_lot in self.active_move_lot_ids:
+        for move_lot in self.active_move_lot_ids.filtered(lambda x: x.product_id.tracking != 'none'):
+
             # Get the quantity of the requested lot code from the MO source location and child locations.
             quants_at_location = self.env['stock.quant'].search(['&', ('lot_id', '=', move_lot.lot_id.id), ('product_id', '=', move_lot.product_id.id), ('location_id', 'in', child_locations.ids)])
             quantity_at_location = sum(quants_at_location.mapped('qty'))
@@ -31,6 +32,8 @@ class MrpWorkorder(models.Model):
                  ('workorder_id', '!=', self.id),
                  ('done_wo', '=', True),
                  ('lot_id', 'in', move_lot.mapped('move_id.active_move_lot_ids.lot_id').ids)])
+
+            other_move_lots = other_move_lots.filtered(lambda x: x.lot_id)
 
             sum_other_mo = sum(other_move_lots.mapped('quantity_done'))
             sum_related = sum(related_move_lots.mapped('quantity_done'))

@@ -49,27 +49,29 @@ class MrpWorkorder(models.Model):
 
                 total_requested = sum(related_move_lots.mapped('quantity_done'))
                 available = round(quantity_at_location - previously_committed - other_mo_committed, 3)
-
-                raise ValidationError(_(
-                    "You cannot validate this workorder operation because the "
+                error_msg = ("You cannot validate this workorder operation because the "
                     "stock level of the product %s %s would become negative "
                     "on the stock location '%s' and negative stock is "
                     "not allowed for this product. \n\n"
-                    "Registered on MO: %s \n"
-                    "Other MOs: %s \n"
-                    # "Currently Requested: %s \n"
-                    "Requested: %s \n"
-                    "Available: %s") % (
+                    "Registered on MO: %s \n") % (
                         move_lot.product_id.name,
                         move_lot.lot_id.name,
                         # move_lot.qty,
                         self.production_id.location_src_id.complete_name,
-                        previously_committed,
-                        other_mo_committed,
+                        previously_committed)
+
+                if other_mo_committed > 0:
+                    error_msg += "\n"
+                    for mo in other_move_lots.mapped('production_id'):
+                        error_msg += ("%s: %s\n") % (mo.name, sum(other_move_lots.filtered(lambda x: x.production_id == mo).mapped('quantity_done')))
+                    error_msg += ("Total Other MOs: %s\n\n") % (other_mo_committed)
+
+                error_msg += ("Requested: %s \n"
+                              "Available: %s") % (
                         currently_committed,
-                        # total_requested,
-                        available,
-                ))
+                        available,)
+
+                raise ValidationError(error_msg)
 
         return super(MrpWorkorder, self).record_production()
 

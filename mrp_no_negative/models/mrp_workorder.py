@@ -76,6 +76,6 @@ class MrpWorkorder(models.Model):
                         available,)
 
                 raise ValidationError(error_msg)
-        raise ValidationError("Not implemented...")
+        
         return super(MrpWorkorder, self).record_production()
 

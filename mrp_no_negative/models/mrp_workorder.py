@@ -16,7 +16,7 @@ class MrpWorkorder(models.Model):
         p = self.env['decimal.precision'].precision_get('Product Unit of Measure')
 
         child_locations = self.env['stock.location'].search([('location_id', 'child_of', self.production_id.location_src_id.id)])
-        for move_lot in self.active_move_lot_ids.filtered(lambda x: x.lot_id and x.product_id.tracking != 'none'):
+        for move_lot in self.active_move_lot_ids.filtered(lambda x: x.lot_id and x.product_id.tracking != 'none' and x.quantity_done > 0):
 
             # Get the quantity of the requested lot code from the MO source location and child locations.
             quants_at_location = self.env['stock.quant'].search(['&', ('lot_id', '=', move_lot.lot_id.id), ('product_id', '=', move_lot.product_id.id), ('location_id', 'in', child_locations.ids)])
@@ -24,14 +24,15 @@ class MrpWorkorder(models.Model):
 
             # Get the related move_lots that match the lot code and product from the production order and workorder that are not done.
             related_move_lots = (move_lot.move_id.active_move_lot_ids + self.active_move_lot_ids).filtered(lambda x: x.product_id == move_lot.product_id and x.lot_id == move_lot.lot_id and move_lot.move_id.state not in ['done', 'cancel'])
+
             other_move_lots = self.env['stock.move.lots'].search(
                 [('move_id.location_id', '=', self.production_id.location_src_id.id),
                  ('move_id.state', 'not in', ['done', 'cancel']),
                  ('product_id', '=', move_lot.move_id.product_id.id),
-                 ('active_lot', '=', True),
                  ('workorder_id', '!=', self.id),
+                 ('production_id', '!=', self.production_id.id),
                  ('done_wo', '=', True),
-                 ('lot_id', 'in', move_lot.mapped('move_id.active_move_lot_ids.lot_id').ids)])
+                 ('lot_id', '=', move_lot.lot_id.id)])
 
             other_move_lots = other_move_lots.filtered(lambda x: x.lot_id)
 
@@ -75,6 +76,6 @@ class MrpWorkorder(models.Model):
                         available,)
 
                 raise ValidationError(error_msg)
-
+        raise ValidationError("Not implemented...")
         return super(MrpWorkorder, self).record_production()
 
